@@ -257,10 +257,14 @@ var Visualization = LightningVisualization.extend({
             if (data.labels) {
                 var fontsize = (size * 72 / 96) / 2.5
                 ctx.font = fontsize + "px monospace"
-                if (d.z < (zdomain[1] - zdomain[0]) / 2) {
-                    ctx.fillStyle = 'black'
+                if (d.z <= (zmax - zmin) / 2) {
+                    if (opacity < 1.0) {
+                        ctx.fillStyle = utils.buildRGBA('black', opacity / 5)
+                    } else {
+                        ctx.fillStyle = utils.buildRGBA('black', opacity)
+                    }
                 } else {
-                    ctx.fillStyle = 'white'
+                    ctx.fillStyle = utils.buildRGBA('white', opacity)
                 }
                 ctx.textBaseline = 'middle'; 
                 ctx.textAlign = 'center'; 
