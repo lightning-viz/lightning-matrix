@@ -6,6 +6,9 @@ var utils = require('lightning-client-utils')
 var colorbrewer = require('colorbrewer')
 var LightningVisualization = require('lightning-visualization');
 
+var fs = require('fs');
+var styles = fs.readFileSync(__dirname + '/style.css');
+
 /*
  * Extend the base visualization object
  */
@@ -14,12 +17,22 @@ var Visualization = LightningVisualization.extend({
     defaultColormap: 'Purples',
 
     init: function() {
+        this.margin = {left: 0, top: 0};
+        if (this.data.rows) {
+            this.margin.left = 120;
+        }
+        if (this.data.columns) {
+            this.margin.top = 120;
+        }
         this.render();
     },
+
+    styles: styles,
 
     render: function() {
         var width = this.width
         var height = this.height
+        var margin = this.margin
         var data = this.data
         var selector = this.selector
         var self = this
@@ -50,16 +63,31 @@ var Visualization = LightningVisualization.extend({
         var zdomain = utils.linspace(zmin, zmax, 9)
         var z = d3.scale.linear().domain(zdomain).range(color);
 
-        // set up x and y scales and ranges
+        // create container
+        var container = d3.select(selector)
+            .append('div')
+            .style('width', width)
+            .style('height', height)
+            .style('position', 'relative')
+
+        // create svg
+        var svg = container
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .style('position', 'absolute')
+            .on('dblclick', reset)
+
+        // automatically determine cell size to fill the grid
         if (ncol > nrow) {
-            var size = Math.min(height / nrow, width / ncol)
+            var size = Math.min((height - margin.top) / nrow, (width - margin.left) / ncol)
         } else {
-            var size = height / nrow
+            var size = (height - margin.top) / nrow
         }
-        
         var y = d3.scale.ordinal().rangeBands([0, (nrow * size)]).domain(d3.range(nrow));
         var x = d3.scale.ordinal().rangeBands([0, (ncol * size)]).domain(d3.range(ncol));
 
+        // adjust height and weight for canvas based on estimated size
         height = nrow * y.rangeBand();
         width = ncol * x.rangeBand();
 
@@ -69,62 +97,176 @@ var Visualization = LightningVisualization.extend({
         var scale = 0
 
         // create canvas
-        var canvas = d3.select(selector)
+        var canvas = container
             .append('canvas')
             .attr('width', width)
             .attr('height', height)
+            .attr('id', 'canvas1')
+            .style('margin-left', margin.left + 'px')
+            .style('margin-top', margin.top + 'px')
+
+        var ctx = canvas
             .node().getContext("2d")
 
         // add keydown events
         d3.select(selector).attr('tabindex', -1)
         d3.select(selector).on('keydown', update)
 
-        // create dummy container for data binding
-        var detachedContainer = document.createElement("custom");
-        var dataContainer = d3.select(detachedContainer);
+        // compute a good font size
+        var labelsize = (size * 72 / 96) / 5
 
-        // drawing wrapper to handle binding
-        function drawCustom(data) {
+        // draw the axis labels
+        if (data.columns) {
+            svg.selectAll('.column-label')
+                .data(data.columns)
+                .enter()
+                .append("text")
+                .attr("text-anchor", "start")
+                .attr("transform", function(d, i) {
+                    return "translate(" + (margin.left + x(i) + x.rangeBand() / 2) + 
+                        "," +  margin.top * 0.8 + ")rotate(-60)" 
+                })
+                .attr("class", "axis-label column-label")
+                .style("font-size", labelsize + "px")
+                .text(function(d) {return d})
+                .on('mouseover', highlight)
+                .on('mouseout', unhighlight)
+                .on('click', select)
+        }
+        if (data.rows) {
+            svg.selectAll('.row-label')
+                .data(data.rows)
+                .enter()
+                .append("text")
+                .attr("text-anchor", "end")
+                .attr("x", margin.left * 0.8)
+                .attr("y", function(d, i) {return margin.top + y(i) + y.rangeBand() / 2})
+                .attr("dy","0.35em")
+                .attr("class", "axis-label row-label")
+                .style("font-size", labelsize + "px")
+                .text(function(d) {return d})
+                .on('mouseover', highlight)
+                .on('mouseout', unhighlight)
+                .on('click', select)
+        }
 
-            var dataBinding = dataContainer.selectAll("custom.rect")
-                .data(data);
+        // begin with nothing selected
+        var selectedx = []
+        var selectedy = []
 
-            dataBinding
-                .attr("fillStyle", function(d) {return z(d.z)});
-              
-            dataBinding.enter()
-                .append("custom")
-                .classed("rect", true)
-                .attr("x", function(d) {return x(d.x)})
-                .attr("y", function(d, i) {return y(d.y)})
-                .attr("width", y.rangeBand())
-                .attr("height", x.rangeBand())
-                .attr("fillStyle", function(d) {return z(d.z)})
-                .attr("strokeStyle", "white")
-                .attr("lineWidth", strokeWidth)
-      
-            drawCanvas();
-        
+        // highlight row or column
+        function highlight() {
+            d3.select(this).classed('selected', true)
+        }
+
+        // unhighlight row or column
+        function unhighlight() {
+            d3.select(this).classed('selected', false)
+        }
+
+        // select row or column
+        function select() {
+            var el = d3.select(this)
+            var thislabel = el.node().__data__
+            var indx = _.indexOf(data.columns, thislabel)
+            var indy = _.indexOf(data.rows, thislabel)
+            if (indx > -1) {
+                selectedx = getselected(selectedx, indx)
+            }
+            if (indy > -1) {
+                selectedy = getselected(selectedy, indy)
+            }
+            console.log(selectedx)
+            console.log(selectedy)
+            draw()
+        }
+
+        // get selected elements given current list
+        function getselected(current, target) {
+            if (_.indexOf(current, target) > -1) {
+                return []
+            } else {
+                return [target]
+            }
+        }
+
+        // reset selections
+        function reset() {
+            selectedx = []
+            selectedy = []
+            draw()
         }
 
         // draw the matrix
-        function drawCanvas() {
+        function draw() {
+
+            d3.selectAll('.row-label').classed('selected-sticky', function(d) {
+                if (selectedy.length > 0) {
+                    if (_.indexOf(data.rows, d) == selectedy) {
+                        return true
+                    } else {
+                        return false
+                    }
+                } else {
+                    return false
+                }
+            })
+
+            d3.selectAll('.column-label').classed('selected-sticky', function(d) {
+                if (selectedx.length > 0) {
+                    if (_.indexOf(data.columns, d) == selectedx) {
+                        return true
+                    } else {
+                        return false
+                    }
+                } else {
+                    return false
+                }
+            })
 
           // clear canvas
-          canvas.clearRect(0, 0, width, height);
+          ctx.clearRect(0, 0, width, height);
           
-          // select nodes and draw their data to canvas
-          var elements = dataContainer.selectAll("custom.rect");
-          elements.each(function(d) {
-            var node = d3.select(this);
-            canvas.beginPath();
-            canvas.fillStyle = node.attr("fillStyle");
-            canvas.strokeStyle = node.attr("strokeStyle");
-            canvas.lineWidth = node.attr("lineWidth");
-            canvas.rect(node.attr("x"), node.attr("y"), node.attr("height"), node.attr("width"));
-            canvas.fill();
-            canvas.stroke();
-            canvas.closePath();
+          _.forEach(data.entries, function(d) {
+
+            var opacity
+            if (selectedx.length > 0 | selectedy.length > 0) {
+                if (selectedx.length > 0 & _.indexOf(selectedx, d.x) > -1) {
+                    opacity = 1.0
+                } else if (selectedy.length > 0 & _.indexOf(selectedy, d.y) > -1) {
+                    opacity = 1.0
+                } else {
+                    opacity = 0.2
+                }
+            } else {
+                opacity = 1.0
+            }
+
+            var fill = utils.buildRGBA(z(d.z), opacity)
+
+            ctx.beginPath();
+            ctx.fillStyle = fill;
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = strokeWidth;
+            ctx.rect(x(d.x), y(d.y), x.rangeBand(), y.rangeBand());
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+
+            // draw text labels
+            if (data.labels) {
+                var fontsize = (size * 72 / 96) / 2.5
+                ctx.font = fontsize + "px monospace"
+                if (d.z < (zdomain[1] - zdomain[0]) / 2) {
+                    ctx.fillStyle = 'black'
+                } else {
+                    ctx.fillStyle = 'white'
+                }
+                ctx.textBaseline = 'middle'; 
+                ctx.textAlign = 'center'; 
+                ctx.fillText(d.z, x(d.x) + x.rangeBand() / 2, y(d.y) + y.rangeBand() / 2)
+            }
+
           })
         }
 
@@ -148,7 +290,7 @@ var Visualization = LightningVisualization.extend({
                 var extent = zmax - zmin
                 zdomain = utils.linspace(zmin + extent * scale, zmax - extent * scale, 9)
                 z.domain(zdomain)
-                drawCustom(entries);
+                draw();
             }
             if (d3.event.keyCode == 37 | d3.event.keyCode == 39) {
                 d3.event.preventDefault();
@@ -166,11 +308,11 @@ var Visualization = LightningVisualization.extend({
                 }
                 color = colormap(clist[cindex])
                 z.range(color)
-                drawCustom(entries);
+                draw();
             }
         }
 
-        drawCustom(entries)
+        draw()
     },
 
     formatData: function(data) {
@@ -181,14 +323,22 @@ var Visualization = LightningVisualization.extend({
                 p.x = j
                 p.y = i
                 p.z = e
+                if (data.rows) {
+                    p.r = data.rows[i]
+                }
+                if (data.columns) {
+                    p.c = data.columns[j]
+                }
                 entries.push(p)
             })
         });
 
         var nrow = data.matrix.length
         var ncol = data.matrix[0].length
-
-        return {entries: entries, nrow: nrow, ncol: ncol, colormap: data.colormap}
+        console.log(data)
+        var labels = data.labels ? data.labels : false
+        return {entries: entries, nrow: nrow, ncol: ncol, colormap: data.colormap,
+                rows: data.rows, columns: data.columns, labels: labels}
     },
 
     updateData: function(formattedData) {
