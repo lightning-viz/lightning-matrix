@@ -2,6 +2,7 @@
   "name": "lightning-matrix",
   "version": "0.0.3",
   "dependencies": {
+    "brfs": "^1.4.0",
     "colorbrewer": "0.0.2",
     "d3": "^3.5.5",
     "d3-multiaxis-zoom": "^1.0.4",
@@ -15,11 +16,16 @@
   "engines": {
     "node": ">=0.8.0"
   },
+  "browserify": {
+    "transform": [
+      "brfs"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lightning-viz/lightning-matrix.git"
   },
   "lightning": {
-    "sampleData": []
+    "name": "matrix"
   }
 }
