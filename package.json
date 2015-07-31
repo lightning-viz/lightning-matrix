@@ -26,6 +26,6 @@
     "url": "git+https://github.com/lightning-viz/lightning-matrix.git"
   },
   "lightning": {
-    "sampleData": []
+    "name": "matrix"
   }
 }
