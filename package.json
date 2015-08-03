@@ -1,6 +1,6 @@
 {
   "name": "lightning-matrix",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "dependencies": {
     "brfs": "^1.4.0",
     "colorbrewer": "0.0.2",
