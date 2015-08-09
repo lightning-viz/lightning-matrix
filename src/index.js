@@ -50,7 +50,7 @@ var Visualization = LightningVisualization.extend({
         var strokeWidth = Math.max(1 - 0.00009 * nrow * ncol, 0.1);
 
         // make a scale for fill coloring
-        var name = data.colormap ? data.colormap : self.defaultColormap;
+        var name = data.colormap ? data.colormap : this.styles.colormap;
         this.makeScales(name);
 
         // create container
