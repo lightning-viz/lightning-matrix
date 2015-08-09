@@ -17,7 +17,7 @@ var Visualization = LightningVisualization.extend({
 
     getDefaultOptions: function() {
         return {
-            labels: true
+            labels: false
         }
     },
 
