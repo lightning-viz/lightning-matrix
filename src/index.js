@@ -17,7 +17,7 @@ var Visualization = LightningVisualization.extend({
 
     getDefaultOptions: function() {
         return {
-            labels: false
+            numbers: false
         }
     },
 
@@ -239,8 +239,8 @@ var Visualization = LightningVisualization.extend({
             ctx.stroke();
             ctx.closePath();
 
-            // draw text labels
-            if (options.labels) {
+            // draw numbers on cells
+            if (options.numbers) {
                 var str = self.formatLabel(d.z);
                 ctx.font = cellfont + "px monospace";
                 if (d.z <= self.data.zmin + (self.data.zmax - self.data.zmin) / 2) {
