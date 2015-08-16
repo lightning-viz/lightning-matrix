@@ -23,10 +23,10 @@ var Visualization = LightningVisualization.extend({
 
     init: function() {
         this.margin = {left: 0, top: 0};
-        if (this.data.rows) {
+        if (this.data.rowLabels) {
             this.margin.left = 80;
         }
-        if (this.data.columns) {
+        if (this.data.columnLabels) {
             this.margin.top = 80;
         }
         this.render();
@@ -112,9 +112,9 @@ var Visualization = LightningVisualization.extend({
         var cellfont = (size * 72 / 96) / 2.5;
 
         // draw the axis labels
-        if (data.columns) {
+        if (data.columnLabels) {
             svg.selectAll('.column-label')
-                .data(data.columns)
+                .data(data.columnLabels)
                 .enter()
                 .append("text")
                 .attr("text-anchor", "start")
@@ -129,9 +129,9 @@ var Visualization = LightningVisualization.extend({
                 .on('mouseout', unhighlight)
                 .on('click', select)
         }
-        if (data.rows) {
+        if (data.rowLabels) {
             svg.selectAll('.row-label')
-                .data(data.rows)
+                .data(data.rowLabels)
                 .enter()
                 .append("text")
                 .attr("text-anchor", "end")
@@ -164,8 +164,8 @@ var Visualization = LightningVisualization.extend({
         function select() {
             var el = d3.select(this);
             var thislabel = el.node().__data__;
-            var indx = _.indexOf(data.columns, thislabel);
-            var indy = _.indexOf(data.rows, thislabel);
+            var indx = _.indexOf(data.columnLabels, thislabel);
+            var indy = _.indexOf(data.rowLabels, thislabel);
             if (indx > -1) {
                 selectedx = getselected(selectedx, indx)
             }
@@ -196,7 +196,7 @@ var Visualization = LightningVisualization.extend({
 
             d3.selectAll('.row-label').classed('selected-sticky', function(d) {
                 if (selectedy.length > 0) {
-                    return (_.indexOf(data.rows, d) == selectedy)
+                    return (_.indexOf(data.rowLabels, d) == selectedy)
                 } else {
                     return false
                 }
@@ -204,7 +204,7 @@ var Visualization = LightningVisualization.extend({
 
             d3.selectAll('.column-label').classed('selected-sticky', function(d) {
                 if (selectedx.length > 0) {
-                    return (_.indexOf(data.columns, d) == selectedx)
+                    return (_.indexOf(data.columnLabels, d) == selectedx)
                 } else {
                     return false
                 }
@@ -340,11 +340,11 @@ var Visualization = LightningVisualization.extend({
                 p.x = j;
                 p.y = i;
                 p.z = e;
-                if (data.rows) {
-                    p.r = data.rows[i]
+                if (data.rowLabels) {
+                    p.r = data.rowLabels[i]
                 }
-                if (data.columns) {
-                    p.c = data.columns[j]
+                if (data.columnLabels) {
+                    p.c = data.columnLabels[j]
                 }
                 entries.push(p)
             })
@@ -361,7 +361,7 @@ var Visualization = LightningVisualization.extend({
         });
 
         return {entries: entries, nrow: nrow, ncol: ncol, colormap: data.colormap,
-                rows: data.rows, columns: data.columns, zmin: zmin, zmax: zmax}
+                rowLabels: data.rowLabels, columnLabels: data.columnLabels, zmin: zmin, zmax: zmax}
     },
 
     updateData: function(formattedData) {
