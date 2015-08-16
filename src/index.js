@@ -60,14 +60,6 @@ var Visualization = LightningVisualization.extend({
             .style('height', height)
             .style('position', 'relative');
 
-        // create svg
-        var svg = container
-            .append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .style('position', 'absolute')
-            .on('dblclick', reset);
-
         // automatically determine cell size to fill the grid
         var size;
         if (ncol > nrow) {
@@ -89,6 +81,14 @@ var Visualization = LightningVisualization.extend({
         var clist = ['Purples', 'Blues', 'Greens', 'Oranges', 'Reds', 'Greys'];
         var cindex = 0;
         var scale = 0;
+
+        // create svg
+        var svg = container
+            .append('svg')
+            .attr('width', width + margin.left)
+            .attr('height', height + margin.top)
+            .style('position', 'absolute')
+            .on('dblclick', reset);
 
         // create canvas
         var canvas = container
