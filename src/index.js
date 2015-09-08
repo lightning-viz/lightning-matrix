@@ -313,11 +313,11 @@ var Visualization = LightningVisualization.extend({
     makeScales: function(d) {
         this.c = d3.scale.linear();
         this.c.domain(utils.linspace(this.data.zmin, this.data.zmax, 9));
-        this.c.range(colorbrewer[d][9])
+        this.c.range(colorbrewer[d][8])
     },
 
     updateRange: function(d) {
-        this.c.range(colorbrewer[d][9])
+        this.c.range(colorbrewer[d][8])
     },
 
     updateDomain: function(d) {
