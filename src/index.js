@@ -281,7 +281,7 @@ var Visualization = LightningVisualization.extend({
                 }
                 var extent = self.data.zmax - self.data.zmin;
                 var domain = utils.linspace(self.data.zmin + extent * scale,
-                    self.data.zmax - extent * scale, 9);
+                    self.data.zmax - extent * scale, self.data.distinct);
                 self.updateDomain(domain);
                 draw();
             }
@@ -312,12 +312,18 @@ var Visualization = LightningVisualization.extend({
 
     makeScales: function(d) {
         this.c = d3.scale.linear();
-        this.c.domain(utils.linspace(this.data.zmin, this.data.zmax, 9));
-        this.c.range(colorbrewer[d][8])
+        this.c.domain(utils.linspace(this.data.zmin, this.data.zmax, this.data.distinct));
+        var cmap
+        if (d == "Lightning") {
+            cmap = utils.getColors(this.data.distinct)
+        } else {
+            cmap = colorbrewer[d][this.data.distinct]
+        }
+        this.c.range(cmap)
     },
 
     updateRange: function(d) {
-        this.c.range(colorbrewer[d][8])
+        this.c.range(colorbrewer[d][this.data.distinct])
     },
 
     updateDomain: function(d) {
@@ -360,8 +366,14 @@ var Visualization = LightningVisualization.extend({
             return d.z
         });
 
+        // get number of distinct elements for colormap handling
+        var distinct = _.uniq(_.flatten(data.matrix)).length
+        if (distinct > 8) {
+            distinct = 8
+        }
+
         return {entries: entries, nrow: nrow, ncol: ncol, colormap: data.colormap,
-                rowLabels: data.rowLabels, columnLabels: data.columnLabels, zmin: zmin, zmax: zmax}
+                rowLabels: data.rowLabels, columnLabels: data.columnLabels, zmin: zmin, zmax: zmax, distinct: distinct}
     },
 
     updateData: function(formattedData) {
