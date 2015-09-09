@@ -40,7 +40,6 @@ var Visualization = LightningVisualization.extend({
         var margin = this.margin;
         var data = this.data;
         var options = this.options;
-        var selector = this.selector;
         var self = this;
 
         var nrow = data.nrow;
@@ -54,7 +53,7 @@ var Visualization = LightningVisualization.extend({
         this.makeScales(name);
 
         // create container
-        var container = d3.select(selector)
+        var container = d3.select(this.el)
             .append('div')
             .style('width', width)
             .style('height', height)
