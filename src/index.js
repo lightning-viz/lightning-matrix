@@ -102,8 +102,8 @@ var Visualization = LightningVisualization.extend({
             .node().getContext("2d");
 
         // add keydown events
-        d3.select(selector).attr('tabindex', -1);
-        d3.select(selector).on('keydown', update);
+        d3.select(this.el).attr('tabindex', -1);
+        d3.select(this.el).on('keydown', update);
 
         // compute good font sizes for axis and cell labels
         var axisfont = Math.min((size * 72 / 96) / 2, 14);
